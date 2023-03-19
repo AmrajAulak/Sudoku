@@ -15,6 +15,10 @@ def sudoku_solver(sudoku):
 
     current_board = sudoku.copy()
     
+    domain = get_domain(current_board)
+    #print (domain)
+    current_board = presolve_board(current_board, domain)
+
     frontier = []
     frontier.append(current_board)
     global explored
@@ -30,7 +34,7 @@ def sudoku_solver(sudoku):
             return solved_board
 
       
-        frontier = (add_nodes(n, current_board, frontier)).copy()
+        frontier = (add_nodes(n, current_board, frontier, domain)).copy()
 
         if len(frontier) == 0:
             #print("No solution found")
@@ -40,12 +44,13 @@ def sudoku_solver(sudoku):
         current_board = new_board.copy()
         
         
-def add_nodes(n, current_board, frontier):
-    domain = np.arange(1, 10)
+def add_nodes(n, current_board, frontier, domain):
+    #domain = np.arange(1, 10)
     for i in range(n):
         for j in range(n):
             if current_board[i,j] == 0:
-                for value in domain:
+                values = domain[(i,j)]
+                for value in values:
                     child_board = current_board.copy()
                     if (valid_move(child_board, i, j, value)):
                         child_board[i, j] = value
@@ -82,6 +87,29 @@ def is_unique(child_board, explored, frontier):
         
     return (not_in_explored() and not_in_frontier())
 
+def get_domain(current_board):
+    domain = {}
+    possible_values = []
+    for i in range(9):
+        for j in range(9):
+            possible_values = []
+            if current_board[i, j] == 0:
+                for x in range(1, 10):
+                    if valid_move(current_board, i, j, x):
+                        possible_values.append(x)
+                domain.update({(i, j): possible_values})
+    
+    return domain
+
+def presolve_board(current_board, domain):
+    for key in domain:
+        if len(domain[key]) == 1:
+            i = key[0]
+            j = key[1]
+            current_board[i][j] = domain[i, j][0]
+
+    return current_board
+
 
 def valid_move(new_board, row_ind, col_ind, value):
 
@@ -115,9 +143,11 @@ def valid_move(new_board, row_ind, col_ind, value):
 
 def main():
     # Load sudokus
-    sudoku = np.load("data/very_easy_puzzle.npy")
+    sudoku = np.load("data/very_easy_puzzle.npy")[1]
     print("very_easy_puzzle.npy has been loaded into the variable sudoku")
-    print(f"sudoku.shape: {sudoku.shape}, sudoku[0].shape: {sudoku[0].shape}, sudoku.dtype: {sudoku.dtype}")
-    sudoku_solver(sudoku[0])
+    print(sudoku)
+    print()
+    #print(f"sudoku.shape: {sudoku.shape}, sudoku[0].shape: {sudoku[0].shape}, sudoku.dtype: {sudoku.dtype}")
+    print(sudoku_solver(sudoku))
 
 #main()
